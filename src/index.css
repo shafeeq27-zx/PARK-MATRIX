@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0c0c0e;
+  --bg-surface: #121216;
+  --bg-card: #18181c;
+  --ink: #e4e4e7;
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --ink-faint: rgba(228, 228, 231, 0.08);
+  --ink-border: rgba(228, 228, 231, 0.14);
+  --ink-muted: rgba(228, 228, 231, 0.5);
+}
+
+body {
+  background-color: #0c0c0e;
+  color: #e4e4e7;
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #10b981;
+  color: #0c0c0e;
+}
+
+.font-display {
+  font-family: 'Syne', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.terminal-dots {
+  background-image: radial-gradient(circle at 2px 2px, rgba(228, 228, 231, 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.label-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: rgba(228, 228, 231, 0.5);
+}
+
+.panel-brutalist {
+  position: relative;
+  border: 1.5px solid #e4e4e7;
+  background: #0c0c0e;
+}
+
+.panel-brutalist::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 100%;
+  height: 100%;
+  background: #10b981;
+  z-index: -1;
+  opacity: 0.25;
+}

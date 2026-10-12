@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Parking Slots Management - Vehicle Parking Management System{% endblock %}
+{% block page_title %}Parking Slots & Visual Layout{% endblock %}
+
+{% block content %}
+<div class="slots-page-container">
+    <div class="section-header">
+        <div>
+            <h1 class="page-heading">Parking Slot Management</h1>
+            <p class="page-subheading">Visual grid layout, slot availability tracking, and bay maintenance</p>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="document.getElementById('addSlotModal').style.display='flex'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add New Slot</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Category Filter Tabs and Legend -->
+    <div class="slot-controls-bar">
+        <div class="slot-filter-tabs">
+            <button class="slot-filter-btn active" data-filter="all">All Categories</button>
+            <button class="slot-filter-btn" data-filter="Bike">Bikes & Scooters</button>
+            <button class="slot-filter-btn" data-filter="Car">Cars & SUVs</button>
+            <button class="slot-filter-btn" data-filter="Van">Vans</button>
+            <button class="slot-filter-btn" data-filter="Truck">Trucks & Buses</button>
+        </div>
+
+        <div class="slot-legend">
+            <div class="legend-item">
+                <span class="legend-box available-box"></span>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-box occupied-box"></span>
+                <span>Occupied</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-box maintenance-box"></span>
+                <span>Maintenance</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Interactive Parking Grid -->
+    <div class="slots-visual-grid" id="slotsContainer">
+        {% for slot in slots %}
+        <div class="slot-card slot-{{ slot.status|lower }}" data-category="{{ slot.slot_type }}">
+            <div class="slot-card-header">
+                <span class="slot-type-label">{{ slot.slot_type }}</span>
+                <span class="slot-status-indicator">{{ slot.status }}</span>
+            </div>
+            <div class="slot-code font-mono">{{ slot.slot_number }}</div>
+            <div class="slot-floor text-xs text-muted">{{ slot.floor }}</div>
+
+            <div class="slot-card-actions">
+                {% if slot.status == 'Available' %}
+                    <form action="{{ url_for('parking_slots') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="toggle_status">
+                        <input type="hidden" name="slot_number" value="{{ slot.slot_number }}">
+                        <input type="hidden" name="status" value="Maintenance">
+                        <button type="submit" class="slot-btn-subtle" title="Mark Maintenance">Hold</button>
+                    </form>
+                    <a href="{{ url_for('vehicle_entry') }}" class="slot-btn-primary" title="Assign vehicle">Park</a>
+                {% elif slot.status == 'Maintenance' %}
+                    <form action="{{ url_for('parking_slots') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="toggle_status">
+                        <input type="hidden" name="slot_number" value="{{ slot.slot_number }}">
+                        <input type="hidden" name="status" value="Available">
+                        <button type="submit" class="slot-btn-subtle" title="Reactivate">Release</button>
+                    </form>
+                {% else %}
+                    <span class="slot-occupied-text font-mono text-xs">Parked</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Slot Modal Dialog -->
+<div class="modal-overlay" id="addSlotModal" style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>Add New Parking Slot</h3>
+            <button class="modal-close" onclick="document.getElementById('addSlotModal').style.display='none'">×</button>
+        </div>
+        <form action="{{ url_for('parking_slots') }}" method="POST">
+            <input type="hidden" name="action" value="add_slot">
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label class="form-label">Slot Identifier Code *</label>
+                    <input type="text" name="slot_number" class="form-control font-mono uppercase" placeholder="e.g. C-25" required>
+                    <span class="form-help">Unique slot code (e.g. B-15 for bike, C-25 for car)</span>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Vehicle Category *</label>
+                    <select name="slot_type" class="form-control" required>
+                        <option value="Bike">Bike / Motorcycle</option>
+                        <option value="Car" selected>Car / Sedan / SUV</option>
+                        <option value="Van">Van / Commercial</option>
+                        <option value="Truck">Truck / Heavy Bay</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Zone / Floor</label>
+                    <input type="text" name="floor" class="form-control" value="Ground Floor" placeholder="e.g. Zone B - Ground Floor">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('addSlotModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Slot</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterButtons = document.querySelectorAll('.slot-filter-btn');
+        const slotCards = document.querySelectorAll('.slot-card');
+
+        filterButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                filterButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const filter = this.getAttribute('data-filter');
+                slotCards.forEach(card => {
+                    if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

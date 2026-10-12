@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Vehicle Records & History - Vehicle Parking Management System{% endblock %}
+{% block page_title %}Vehicle Records History{% endblock %}
+
+{% block content %}
+<div class="history-page-container">
+    <div class="section-header">
+        <div>
+            <h1 class="page-heading">Vehicle Parking Log & History</h1>
+            <p class="page-subheading">Audit trail of all active and completed parking sessions with CSV export</p>
+        </div>
+        <div class="header-actions">
+            <a href="{{ url_for('export_csv') }}" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Export CSV Spreadsheet</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar Card -->
+    <div class="card mb-6">
+        <div class="card-body">
+            <form action="{{ url_for('vehicle_history') }}" method="GET" class="filter-form-grid">
+                <div class="filter-col">
+                    <label class="form-label text-xs">Search Plate / Owner / Slot</label>
+                    <input 
+                        type="text" 
+                        name="search" 
+                        class="form-control form-control-sm" 
+                        placeholder="Search keyword..."
+                        value="{{ search }}"
+                    >
+                </div>
+
+                <div class="filter-col">
+                    <label class="form-label text-xs">Session Status</label>
+                    <select name="status" class="form-control form-control-sm">
+                        <option value="All" {% if status == 'All' %}selected{% endif %}>All Statuses</option>
+                        <option value="Active" {% if status == 'Active' %}selected{% endif %}>Active (Parked)</option>
+                        <option value="Completed" {% if status == 'Completed' %}selected{% endif %}>Completed (Exited)</option>
+                    </select>
+                </div>
+
+                <div class="filter-col">
+                    <label class="form-label text-xs">Vehicle Category</label>
+                    <select name="vehicle_type" class="form-control form-control-sm">
+                        <option value="All" {% if vehicle_type == 'All' %}selected{% endif %}>All Categories</option>
+                        <option value="Bike" {% if vehicle_type == 'Bike' %}selected{% endif %}>Bike</option>
+                        <option value="Car" {% if vehicle_type == 'Car' %}selected{% endif %}>Car</option>
+                        <option value="Van" {% if vehicle_type == 'Van' %}selected{% endif %}>Van</option>
+                        <option value="Truck" {% if vehicle_type == 'Truck' %}selected{% endif %}>Truck</option>
+                    </select>
+                </div>
+
+                <div class="filter-col">
+                    <label class="form-label text-xs">Date From</label>
+                    <input 
+                        type="date" 
+                        name="date_from" 
+                        class="form-control form-control-sm"
+                        value="{{ date_from }}"
+                    >
+                </div>
+
+                <div class="filter-col">
+                    <label class="form-label text-xs">Date To</label>
+                    <input 
+                        type="date" 
+                        name="date_to" 
+                        class="form-control form-control-sm"
+                        value="{{ date_to }}"
+                    >
+                </div>
+
+                <div class="filter-col-actions">
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                    <a href="{{ url_for('vehicle_history') }}" class="btn btn-secondary btn-sm">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Records Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recorded Sessions ({{ records|length }})</h3>
+        </div>
+        <div class="card-body p-0">
+            {% if records %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Registration No.</th>
+                            <th>Vehicle Type</th>
+                            <th>Owner Name</th>
+                            <th>Contact</th>
+                            <th>Slot</th>
+                            <th>Entry Time</th>
+                            <th>Exit Time</th>
+                            <th>Duration</th>
+                            <th>Fee</th>
+                            <th>Status</th>
+                            <th>Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in records %}
+                        <tr>
+                            <td class="font-mono text-muted text-xs">{{ r.id }}</td>
+                            <td class="font-mono font-semibold">{{ r.reg_number }}</td>
+                            <td><span class="badge-type">{{ r.vehicle_type }}</span></td>
+                            <td>{{ r.owner_name }}</td>
+                            <td class="font-mono text-xs">{{ r.contact_number }}</td>
+                            <td><span class="slot-badge">{{ r.slot_number }}</span></td>
+                            <td class="font-mono text-xs">{{ r.entry_time }}</td>
+                            <td class="font-mono text-xs">
+                                {% if r.exit_time %}
+                                    {{ r.exit_time }}
+                                {% else %}
+                                    <span class="text-muted">In Lot</span>
+                                {% endif %}
+                            </td>
+                            <td class="font-mono text-xs">
+                                {% if r.duration_hours %}
+                                    {{ r.duration_hours }} hr
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="font-mono">
+                                {% if r.fee is not none and r.fee > 0 %}
+                                    ${{ "%.2f"|format(r.fee) }}
+                                {% else %}
+                                    <span class="text-muted">$0.00</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if r.status == 'Active' %}
+                                    <span class="status-badge status-active">Active</span>
+                                {% else %}
+                                    <span class="status-badge status-completed">Completed</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if r.status == 'Completed' %}
+                                    <a href="{{ url_for('receipt', record_id=r.id) }}" class="btn btn-outline-sm">Receipt</a>
+                                {% else %}
+                                    <a href="{{ url_for('vehicle_exit', search=r.reg_number) }}" class="btn btn-outline-sm">Exit</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <p>No matching parking records found with the applied filters.</p>
+                <a href="{{ url_for('vehicle_history') }}" class="btn btn-secondary btn-sm mt-2">Clear Filters</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

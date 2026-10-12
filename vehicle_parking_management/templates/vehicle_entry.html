@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Vehicle Entry - Vehicle Parking Management System{% endblock %}
+{% block page_title %}New Vehicle Entry{% endblock %}
+
+{% block content %}
+<div class="form-page-container">
+    <div class="section-header">
+        <div>
+            <h1 class="page-heading">Register Vehicle Entry</h1>
+            <p class="page-subheading">Log vehicle arrival and automatically allocate parking bay</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <div class="entry-layout-grid">
+        <!-- ANPR Automatic Camera Scanner Bar -->
+        <div class="card" style="grid-column: 1 / -1; background: #121216; border: 1.5px solid #10b981; margin-bottom: 1.5rem;">
+            <div class="card-header" style="background: rgba(16, 185, 129, 0.1); border-bottom: 1px solid rgba(16, 185, 129, 0.3); display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="background: #10b981; color: #0c0c0e; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 800; padding: 2px 6px; text-transform: uppercase;">⚡ ANPR AUTOMATIC SCANNER</span>
+                    <h3 class="card-title" style="margin: 0; font-size: 0.95rem; color: #fff;">Camera License Plate Recognition Gate</h3>
+                </div>
+                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #10b981;">HARDWARE: CONNECTED</span>
+            </div>
+            <div class="card-body" style="padding: 1.25rem;">
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 0.85rem; font-weight: 600; color: #e4e4e7;">Automatic Boom Barrier & Check-In Trigger</div>
+                        <p style="font-size: 0.75rem; color: #a1a1aa; margin: 4px 0 0 0; font-family: 'JetBrains Mono', monospace;">
+                            Simulate incoming vehicle optical plate capture or click a preset plate below to auto-assign a bay.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary" onclick="simulatePlateScan('KA-01-MJ-4521', 'Car', 'Vikramaditya Roy', '9845012345')" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
+                            🚗 KA-01-MJ-4521 (Car)
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="simulatePlateScan('MH-12-QE-8840', 'Car', 'Priya Deshmukh', '9822099812')" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
+                            🚙 MH-12-QE-8840 (Car)
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="simulatePlateScan('DL-3C-AZ-9921', 'Bike', 'Arjun Verma', '9811223344')" style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;">
+                            🏍️ DL-3C-AZ-9921 (Bike)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entry Form Card -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Vehicle & Driver Details</h3>
+                <span class="card-tag">Automated Slot Allocation</span>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('vehicle_entry') }}" method="POST" id="entryForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reg_number" class="form-label">
+                                Vehicle Registration Number <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="reg_number" 
+                                name="reg_number" 
+                                class="form-control font-mono uppercase" 
+                                placeholder="e.g. KA-01-AB-1234" 
+                                required
+                                autocomplete="off"
+                            >
+                            <span class="form-help">License plate number (will be formatted to uppercase)</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="vehicle_type" class="form-label">
+                                Vehicle Category <span class="required">*</span>
+                            </label>
+                            <select id="vehicle_type" name="vehicle_type" class="form-control" required>
+                                <option value="" disabled selected>Select category...</option>
+                                <option value="Bike">Bike / Motorcycle ($2.00/hr)</option>
+                                <option value="Car" selected>Car / Sedan / SUV ($5.00/hr)</option>
+                                <option value="Van">Van / Minivan ($8.00/hr)</option>
+                                <option value="Truck">Truck / Heavy Vehicle ($12.00/hr)</option>
+                            </select>
+                            <span class="form-help">Slot allocation and hourly tariff depend on vehicle type</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="owner_name" class="form-label">
+                                Owner / Driver Name <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="owner_name" 
+                                name="owner_name" 
+                                class="form-control" 
+                                placeholder="e.g. John Doe" 
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contact_number" class="form-label">
+                                Contact Phone Number <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="tel" 
+                                id="contact_number" 
+                                name="contact_number" 
+                                class="form-control font-mono" 
+                                placeholder="e.g. 9876543210" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="entry_time_display" class="form-label">
+                                Entry Timestamp (Auto-Generated)
+                            </label>
+                            <input 
+                                type="text" 
+                                id="entry_time_display" 
+                                class="form-control font-mono" 
+                                readonly 
+                                value="Generating current timestamp..."
+                            >
+                            <span class="form-help">Synchronized with system server time</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="slot_number" class="form-label">
+                                Assigned Parking Slot <span class="required">*</span>
+                            </label>
+                            <select id="slot_number" name="slot_number" class="form-control font-mono" required>
+                                <option value="">Auto-detecting best available slot...</option>
+                            </select>
+                            <span class="form-help" id="slotAvailabilityNote">Auto-assigned first available slot</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                            </svg>
+                            <span>Confirm & Park Vehicle</span>
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tariff & Guidance Sidebar Card -->
+        <div class="card info-sidebar-card">
+            <div class="card-header">
+                <h3 class="card-title">Hourly Tariff & Policy</h3>
+            </div>
+            <div class="card-body">
+                <div class="tariff-list">
+                    <div class="tariff-item">
+                        <div class="tariff-name">
+                            <span class="vehicle-icon">🏍️</span>
+                            <span>Two Wheeler / Bike</span>
+                        </div>
+                        <span class="tariff-rate font-mono">$2.00 / hr</span>
+                    </div>
+                    <div class="tariff-item">
+                        <div class="tariff-name">
+                            <span class="vehicle-icon">🚗</span>
+                            <span>Standard Car / SUV</span>
+                        </div>
+                        <span class="tariff-rate font-mono">$5.00 / hr</span>
+                    </div>
+                    <div class="tariff-item">
+                        <div class="tariff-name">
+                            <span class="vehicle-icon">🚐</span>
+                            <span>Commercial Van</span>
+                        </div>
+                        <span class="tariff-rate font-mono">$8.00 / hr</span>
+                    </div>
+                    <div class="tariff-item">
+                        <div class="tariff-name">
+                            <span class="vehicle-icon">🚛</span>
+                            <span>Heavy Truck / Bus</span>
+                        </div>
+                        <span class="tariff-rate font-mono">$12.00 / hr</span>
+                    </div>
+                </div>
+
+                <div class="rules-notice mt-4">
+                    <h4 class="notice-title">College Parking Rules</h4>
+                    <ul class="rules-bullet-list">
+                        <li>Billing begins immediately upon gate entry.</li>
+                        <li>Partial hours are rounded up to the next full billable hour.</li>
+                        <li>Vehicle owner receives an official digital receipt at checkout.</li>
+                        <li>Duplicate license plates cannot be parked simultaneously.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Live auto-updating entry timestamp display
+        const timeInput = document.getElementById('entry_time_display');
+        function updateTime() {
+            const now = new Date();
+            timeInput.value = now.toISOString().replace('T', ' ').substring(0, 19);
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Dynamic slot loader based on vehicle category
+        const vehicleSelect = document.getElementById('vehicle_type');
+        const slotSelect = document.getElementById('slot_number');
+        const slotNote = document.getElementById('slotAvailabilityNote');
+
+        function fetchSlotsForCategory(category) {
+            if (!category) return;
+            slotSelect.innerHTML = '<option value="">Loading slots...</option>';
+            
+            fetch(`/api/available-slots/${category}`)
+                .then(res => res.json())
+                .then(slots => {
+                    slotSelect.innerHTML = '';
+                    if (slots.length === 0) {
+                        const opt = document.createElement('option');
+                        opt.value = '';
+                        opt.textContent = `No available slots for ${category}! (Lot Full)`;
+                        slotSelect.appendChild(opt);
+                        slotNote.textContent = `⚠️ Parking is currently full for ${category}`;
+                        slotNote.style.color = '#ef4444';
+                    } else {
+                        // Populate available slots, auto-select the first one
+                        slots.forEach((s, idx) => {
+                            const opt = document.createElement('option');
+                            opt.value = s.slot_number;
+                            opt.textContent = `${s.slot_number} (${s.floor || 'Ground'}) ${idx === 0 ? '— [Auto Recommended]' : ''}`;
+                            slotSelect.appendChild(opt);
+                        });
+                        slotSelect.value = slots[0].slot_number;
+                        slotNote.textContent = `✓ ${slots.length} available slots. Recommended: ${slots[0].slot_number}`;
+                        slotNote.style.color = '#10b981';
+                    }
+                })
+                .catch(() => {
+                    slotSelect.innerHTML = '<option value="">Error loading slots</option>';
+                });
+        }
+
+        vehicleSelect.addEventListener('change', function() {
+            fetchSlotsForCategory(this.value);
+        });
+
+        // Trigger on initial page load with selected value
+        if (vehicleSelect.value) {
+            fetchSlotsForCategory(vehicleSelect.value);
+        }
+    });
+
+    function simulatePlateScan(reg, type, owner, contact) {
+        const regInput = document.getElementById('reg_number');
+        const typeSelect = document.getElementById('vehicle_type');
+        const ownerInput = document.getElementById('owner_name');
+        const contactInput = document.getElementById('contact_number');
+
+        if (regInput) regInput.value = reg;
+        if (ownerInput) ownerInput.value = owner;
+        if (contactInput) contactInput.value = contact;
+        if (typeSelect) {
+            typeSelect.value = type;
+            typeSelect.dispatchEvent(new Event('change'));
+        }
+
+        // Highlight inputs with green outline animation
+        [regInput, ownerInput, contactInput].forEach(el => {
+            if (el) {
+                el.style.borderColor = '#10b981';
+                el.style.backgroundColor = 'rgba(16, 185, 129, 0.08)';
+                setTimeout(() => {
+                    el.style.borderColor = '';
+                    el.style.backgroundColor = '';
+                }, 1200);
+            }
+        });
+    }
+</script>
+{% endblock %}

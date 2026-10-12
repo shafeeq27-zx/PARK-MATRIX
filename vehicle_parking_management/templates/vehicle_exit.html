@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Vehicle Exit & Billing - Vehicle Parking Management System{% endblock %}
+{% block page_title %}Vehicle Exit & Fee Payment{% endblock %}
+
+{% block content %}
+<div class="exit-page-container">
+    <div class="section-header">
+        <div>
+            <h1 class="page-heading">Vehicle Checkout & Fee Calculation</h1>
+            <p class="page-subheading">Look up active vehicle by license plate, calculate billable duration, and process receipt</p>
+        </div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Top Plate Lookup Box -->
+    <div class="card mb-6">
+        <div class="card-body">
+            <form action="{{ url_for('vehicle_exit') }}" method="GET" class="search-plate-form">
+                <div class="search-input-group">
+                    <label for="search" class="search-label">Search Parked Vehicle:</label>
+                    <div class="input-with-button">
+                        <input 
+                            type="text" 
+                            id="search" 
+                            name="search" 
+                            class="form-control font-mono uppercase" 
+                            placeholder="Enter Registration No (e.g. KA-01-AB-1234)"
+                            value="{{ search_query }}"
+                            required
+                        >
+                        <button type="submit" class="btn btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                            <span>Search Active Ticket</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="exit-layout-grid">
+        <!-- Billing Details / Checkout Confirmation -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Billing Summary & Fee Breakdown</h3>
+                {% if active_record %}
+                    <span class="status-badge status-active">Vehicle Active</span>
+                {% else %}
+                    <span class="card-tag">Awaiting Vehicle Selection</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if active_record and fee_breakdown %}
+                <div class="bill-summary-card">
+                    <div class="bill-vehicle-meta">
+                        <div class="meta-item">
+                            <span class="meta-label">Registration No:</span>
+                            <span class="meta-val font-mono font-bold text-lg">{{ active_record.reg_number }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Vehicle Type:</span>
+                            <span class="meta-val badge-type">{{ active_record.vehicle_type }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Assigned Slot:</span>
+                            <span class="meta-val slot-badge font-bold">{{ active_record.slot_number }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Owner Name:</span>
+                            <span class="meta-val">{{ active_record.owner_name }}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Contact Number:</span>
+                            <span class="meta-val font-mono">{{ active_record.contact_number }}</span>
+                        </div>
+                    </div>
+
+                    <div class="timing-breakdown-box">
+                        <div class="timing-row">
+                            <span class="timing-label">Gate Entry Time:</span>
+                            <span class="timing-val font-mono">{{ fee_breakdown.entry_dt }}</span>
+                        </div>
+                        <div class="timing-row">
+                            <span class="timing-label">Exit Checkout Time:</span>
+                            <span class="timing-val font-mono">{{ fee_breakdown.exit_dt }}</span>
+                        </div>
+                        <div class="timing-row">
+                            <span class="timing-label">Total Elapsed Duration:</span>
+                            <span class="timing-val font-mono font-semibold">{{ fee_breakdown.duration_text }} ({{ fee_breakdown.total_minutes }} mins)</span>
+                        </div>
+                        <div class="timing-row highlight-row">
+                            <span class="timing-label">Billable Duration (Rounded Up):</span>
+                            <span class="timing-val font-mono font-bold">{{ fee_breakdown.billable_hours }} Hour(s)</span>
+                        </div>
+                        <div class="timing-row">
+                            <span class="timing-label">Hourly Tariff Rate:</span>
+                            <span class="timing-val font-mono">${{ "%.2f"|format(fee_breakdown.hourly_rate) }} / hr</span>
+                        </div>
+                    </div>
+
+                    <div class="total-fee-banner">
+                        <div class="fee-text-left">
+                            <span class="fee-caption">Calculated Total Fee</span>
+                            <span class="fee-formula font-mono">{{ fee_breakdown.billable_hours }} hr × ${{ "%.2f"|format(fee_breakdown.hourly_rate) }}</span>
+                        </div>
+                        <div class="fee-amount font-mono">
+                            ${{ "%.2f"|format(fee_breakdown.total_fee) }}
+                        </div>
+                    </div>
+
+                    <form action="{{ url_for('vehicle_exit') }}" method="POST" class="mt-4">
+                        <input type="hidden" name="record_id" value="{{ active_record.id }}">
+                        
+                        <div class="form-group mb-4">
+                            <label class="form-label">Payment Method & Status:</label>
+                            <div class="payment-method-selector">
+                                <label class="radio-label">
+                                    <input type="radio" name="payment_status" value="Paid" checked>
+                                    <span>Cash / Digital Pay (Paid Now)</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="payment_status" value="Pending">
+                                    <span>Payment Pending / Campus Pass</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Complete Exit & Print Receipt</span>
+                            </button>
+                            <a href="{{ url_for('vehicle_exit') }}" class="btn btn-secondary">Clear</a>
+                        </div>
+                    </form>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    <h4>No Vehicle Selected</h4>
+                    <p>Enter a vehicle registration number in the search box above or click any parked vehicle from the active list on the right to review fees.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Currently Active Parked Vehicles Quick-Picker -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Currently Parked Vehicles</h3>
+                <span class="font-mono text-sm text-muted">({{ active_vehicles|length }} active)</span>
+            </div>
+            <div class="card-body p-0">
+                {% if active_vehicles %}
+                <div class="active-vehicles-scroll">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Plate</th>
+                                    <th>Type</th>
+                                    <th>Slot</th>
+                                    <th>Entry Time</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for v in active_vehicles %}
+                                <tr class="{% if active_record and active_record.id == v.id %}selected-row{% endif %}">
+                                    <td class="font-mono font-semibold">{{ v.reg_number }}</td>
+                                    <td><span class="badge-type">{{ v.vehicle_type }}</span></td>
+                                    <td><span class="slot-badge">{{ v.slot_number }}</span></td>
+                                    <td class="font-mono text-xs">{{ v.entry_time }}</td>
+                                    <td>
+                                        <a href="{{ url_for('vehicle_exit', search=v.reg_number) }}" class="btn btn-outline-sm">
+                                            Checkout
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="empty-state p-6">
+                    <p>No vehicles are currently parked. Parking lot is empty!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

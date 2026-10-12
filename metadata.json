@@ -1,0 +1,6 @@
+{
+  "name": "Vehicle Parking Management System",
+  "description": "Full-stack digital parking management system for colleges and commercial lots, featuring real-time slot occupancy, automated hourly fee calculation, receipt printing, and comprehensive records.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Revenue Reports - Vehicle Parking Management System{% endblock %}
+{% block page_title %}Revenue & Utilization Reports{% endblock %}
+
+{% block content %}
+<div class="reports-page-container">
+    <div class="section-header">
+        <div>
+            <h1 class="page-heading">Financial Reports & Statistics</h1>
+            <p class="page-subheading">Aggregated daily, monthly, and vehicle category earnings</p>
+        </div>
+        <div class="header-actions">
+            <button onclick="window.print()" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                <span>Print Report</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Financial Highlights -->
+    <div class="metrics-grid mb-6">
+        <div class="metric-card">
+            <span class="metric-label">All-Time Revenue</span>
+            <div class="metric-value font-mono text-emerald">${{ "%.2f"|format(stats.total_revenue) }}</div>
+            <span class="metric-subtext">Cumulative settled payments</span>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Today's Revenue</span>
+            <div class="metric-value font-mono text-success">${{ "%.2f"|format(stats.revenue_today) }}</div>
+            <span class="metric-subtext">Earned today</span>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Completed Sessions</span>
+            <div class="metric-value font-mono">{{ stats.exited_today }}</div>
+            <span class="metric-subtext">Checkouts settled today</span>
+        </div>
+        <div class="metric-card">
+            <span class="metric-label">Current Occupancy</span>
+            <div class="metric-value font-mono">{{ stats.occupancy_rate }}%</div>
+            <span class="metric-subtext">{{ stats.occupied_slots }} / {{ stats.total_slots }} slots filled</span>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="dashboard-split-grid mb-6">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Daily Revenue Trend (Past 7 Days)</h3>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="dailyRevenueChart" height="240"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Revenue Share by Vehicle Category</h3>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="categoryRevenueChart" height="240"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Aggregation Tables -->
+    <div class="dashboard-split-grid">
+        <!-- Daily Breakdown Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Daily Audit Ledger</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Vehicles Exited</th>
+                                <th>Revenue Collected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for d in report_data.daily %}
+                            <tr>
+                                <td class="font-mono">{{ d.day_date }}</td>
+                                <td class="font-mono">{{ d.vehicle_count }}</td>
+                                <td class="font-mono font-bold text-success">${{ "%.2f"|format(d.daily_revenue) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted p-4">No daily revenue records yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Breakdown Table -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Monthly Audit Summary</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Total Vehicles</th>
+                                <th>Gross Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in report_data.monthly %}
+                            <tr>
+                                <td class="font-mono">{{ m.month_str }}</td>
+                                <td class="font-mono">{{ m.total_vehicles }}</td>
+                                <td class="font-mono font-bold text-emerald">${{ "%.2f"|format(m.monthly_revenue) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted p-4">No monthly records yet.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Daily Revenue Bar Chart
+        const dailyLabels = [{% for d in report_data.daily|reverse %}'{{ d.day_date }}',{% endfor %}];
+        const dailyValues = [{% for d in report_data.daily|reverse %}{{ d.daily_revenue }},{% endfor %}];
+
+        const dailyCtx = document.getElementById('dailyRevenueChart');
+        if (dailyCtx) {
+            new Chart(dailyCtx, {
+                type: 'bar',
+                data: {
+                    labels: dailyLabels.length > 0 ? dailyLabels : ['No Data'],
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: dailyValues.length > 0 ? dailyValues : [0],
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: v => '$' + v }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Category Revenue Donut Chart
+        const catLabels = [{% for c in report_data.by_type %}'{{ c.vehicle_type }}',{% endfor %}];
+        const catValues = [{% for c in report_data.by_type %}{{ c.total_revenue }},{% endfor %}];
+
+        const catCtx = document.getElementById('categoryRevenueChart');
+        if (catCtx) {
+            new Chart(catCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels.length > 0 ? catLabels : ['None'],
+                    datasets: [{
+                        data: catValues.length > 0 ? catValues : [1],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
