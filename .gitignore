@@ -1,8 +1,44 @@
+# Dependencies
 node_modules/
-build/
+.pnp
+.pnp.js
+
+# Production build artifacts
 dist/
-coverage/
-.DS_Store
+build/
+dist-ssr/
+*.local
+
+# Logs and debug
 *.log
-.env*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment and secrets
+.env
+.env*.local
 !.env.example
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+
+# Python & SQLite artifacts (for college project backend)
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+*.db
+.venv/
+venv/
+ENV/
