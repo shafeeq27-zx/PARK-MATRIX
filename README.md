@@ -97,3 +97,27 @@ npm run preview
 4. **Thermal Receipt Printing**: Printable parking ticket format with check-in, duration, payment breakdown, and QR code representation.
 5. **Auto-Alert System**: Critical visual banner warning when occupancy exceeds 90% capacity.
 6. **Revenue & Occupancy Analytics**: Interactive Recharts bar chart showing monthly earnings and vehicle category distributions.
+
+---
+
+## 🌐 Deploying to GitHub Pages (Fixing Blank Screen)
+
+### Why does a Blank White Page happen on GitHub Pages?
+By default, Vite builds applications with root-absolute asset paths (`base: '/'`). When deployed to GitHub Pages under a repository subpath (e.g. `https://your-username.github.io/your-repo-name/`), the browser attempts to fetch JavaScript and CSS from `https://your-username.github.io/assets/` instead of `https://your-username.github.io/your-repo-name/assets/`. This leads to HTTP 404 errors for the bundle scripts, leaving the screen blank white.
+
+### The Fix (Already configured)
+1. In `vite.config.ts`, `base: './'` is configured to ensure relative asset referencing across any repository name or custom domain.
+2. A build plugin generates `dist/404.html` from `dist/index.html` to handle routing gracefully on GitHub Pages.
+3. An automated GitHub Actions workflow is provided in `.github/workflows/deploy.yml`.
+
+### How to Enable GitHub Pages in your Repository:
+1. Push your code to your GitHub repository:
+   ```bash
+   git add .
+   git commit -m "Configure GitHub Pages deployment"
+   git push origin main
+   ```
+2. In your GitHub repository, navigate to **Settings** → **Pages**.
+3. Under **Build and deployment** → **Source**, select **GitHub Actions**.
+4. The workflow will automatically trigger, build the application, and deploy it to `https://<your-username>.github.io/<your-repo-name>/`.
+
